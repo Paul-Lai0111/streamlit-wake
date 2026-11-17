@@ -1,0 +1,61 @@
+name: Streamlit Wake
+description: Keep Streamlit Community Cloud apps awake by visiting them in a real browser and pressing the wake button when they are asleep.
+author: Paul Lai
+branding:
+  icon: sunrise
+  color: red
+
+inputs:
+  urls:
+    description: App URLs to wake, one per line (or separated by spaces or commas). Added to the ones in `file`.
+    required: false
+    default: ""
+  file:
+    description: A file in your repository listing app URLs, one per line. Lines starting with # are ignored. Skipped if it does not exist.
+    required: false
+    default: apps.txt
+  timeout:
+    description: Seconds to wait for each app to finish loading. A cold start can take a few minutes.
+    required: false
+    default: "240"
+
+runs:
+  using: composite
+  steps:
+    - name: List apps
+      id: list
+      shell: bash
+      env:
+        WAKE_URLS: ${{ inputs.urls }}
+      run: |
+        file="${{ inputs.file }}"
+        [ -f "$file" ] || file=/dev/null
+        count=$(python3 "$GITHUB_ACTION_PATH/wake.py" --list "$file" | grep -c . || true)
+        echo "count=$count" >> "$GITHUB_OUTPUT"
+        echo "$count app(s) to visit"
+
+    - if: steps.list.outputs.count != '0'
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - if: steps.list.outputs.count != '0'
+      name: Install Playwright and Chromium
+      shell: bash
+      run: |
+        python -m pip install --quiet -r "$GITHUB_ACTION_PATH/requirements.txt"
+        python -m playwright install --with-deps chromium
+
+    - name: Visit every app
+      shell: bash
+      env:
+        WAKE_URLS: ${{ inputs.urls }}
+        WAKE_TIMEOUT: ${{ inputs.timeout }}
+      run: |
+        file="${{ inputs.file }}"
+        [ -f "$file" ] || file=/dev/null
+        if [ "${{ steps.list.outputs.count }}" = "0" ]; then
+          python3 "$GITHUB_ACTION_PATH/wake.py" "$file"
+        else
+          python "$GITHUB_ACTION_PATH/wake.py" "$file"
+        fi
