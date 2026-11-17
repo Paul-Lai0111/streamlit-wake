@@ -1,0 +1,39 @@
+name: Wake Streamlit apps
+
+on:
+  schedule:
+    # Every 6 hours (UTC). Streamlit puts an app to sleep after about 12 hours without
+    # visitors, so this leaves room for GitHub starting a scheduled run late.
+    # Minute 17 avoids the busy top of the hour.
+    - cron: "17 */6 * * *"
+  workflow_dispatch: # adds a "Run workflow" button in the Actions tab
+
+permissions:
+  actions: write # only for the last step, which keeps this schedule enabled
+  contents: read
+
+concurrency:
+  group: wake
+  cancel-in-progress: false
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      # Visits every URL in apps.txt. To list them here instead, add:
+      #   with:
+      #     urls: |
+      #       https://your-app-name.streamlit.app/
+      - uses: ./
+
+      # GitHub turns off scheduled workflows in a public repository after 60 days without
+      # activity. Re-enabling this workflow through the API on every run keeps it on without
+      # commits. If you rename this file, change wake.yml below too.
+      - name: Keep the schedule enabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/wake.yml/enable"
