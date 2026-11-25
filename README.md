@@ -1,71 +1,39 @@
 # streamlit-wake
 
-[![Test](https://github.com/Paul-Lai0111/streamlit-wake/actions/workflows/test.yml/badge.svg)](https://github.com/Paul-Lai0111/streamlit-wake/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+I host a few side projects on Streamlit Community Cloud, like my
+[MLB pitch analytics app](https://paul-mlb-deeppitch-analytics.streamlit.app/), and I got tired
+of sending someone the link only for them to see "Zzzz. This app has gone to sleep due to
+inactivity." Free Streamlit apps fall asleep after about 12 hours without visitors, and an uptime
+ping doesn't help because the app only restarts when someone clicks the wake button in a real
+browser. streamlit-wake runs on GitHub Actions every 6 hours, opens each app in headless
+Chromium, clicks that button if it's there, and waits until the app has actually loaded.
 
-**English** · [繁體中文](README.zh-TW.md)
+## Usage
 
-Keep your free Streamlit Community Cloud apps awake, so recruiters, classmates and users never
-land on *"Zzzz. This app has gone to sleep due to inactivity."*
+### Start from this repo
 
-A GitHub Actions workflow visits each of your apps every 6 hours in a real (headless) browser.
-If an app is asleep, it presses **"Yes, get this app back up!"** just as a visitor would, then
-waits until the app has actually loaded. Free, no server, no account other than GitHub, and set
-up in about three minutes.
-
-## Why a simple ping does not work
-
-Streamlit Community Cloud puts an app to sleep after about 12 hours without visitors. Uptime
-monitors and `curl` cron jobs are the usual suggestion, but they do not help:
-
-- A sleeping app is a normal web page that loads fine, so a ping cannot tell asleep from awake.
-- Streamlit restarts the app only when someone presses the wake button in a browser. A ping never
-  presses anything.
-
-So this tool behaves like a visitor: it opens the page with [Playwright](https://playwright.dev/)
-(headless Chromium), presses the button if it is there, and checks that the app itself has
-rendered.
-
-```
-GitHub Actions (every 6 h)
-  └─ for each URL in apps.txt
-       open the page in headless Chromium
-       ├─ app already rendered ............ awake  🟢
-       ├─ wake button shown → press it,
-       │  wait for the app to render ...... woken  🔵
-       └─ nothing after 4 minutes ......... failed 🔴  (the run fails and GitHub emails you)
-```
-
-## Quick start (3 minutes, no code)
-
-1. Click **Use this template → Create a new repository** at the top of this page. Public or
-   private both work (see [Public or private?](#public-or-private)).
-2. In your new repository, open `apps.txt`, click the pencil icon, and add your app URLs, one per
-   line:
+1. Click **Use this template → Create a new repository**.
+2. Edit `apps.txt` in the new repo and put one app URL per line:
 
    ```text
    https://your-app-name.streamlit.app/
    https://your-other-app.streamlit.app/
    ```
 
-   Commit the change.
-3. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and
-   enable them**.
-4. Click **Wake Streamlit apps → Run workflow** to try it right away. After a minute or two,
-   open the run: the summary shows a status for every app.
+3. Go to the **Actions** tab and enable workflows if GitHub asks.
+4. Run **Wake Streamlit apps → Run workflow** once to check it works. After that it runs on its
+   own every 6 hours.
 
-That's it. From now on it runs by itself every 6 hours.
+### Add it to a repo you already have
 
-## Or: add it to a repository you already have
-
-Create `.github/workflows/wake.yml` in any repository (for example your app's own repo):
+Put this in `.github/workflows/wake.yml` (in your app's own repo, for example):
 
 ```yaml
 name: Wake Streamlit apps
 
 on:
   schedule:
-    - cron: "17 */6 * * *" # every 6 hours (UTC)
+    - cron: "17 */6 * * *" # every 6 hours, UTC
   workflow_dispatch:
 
 jobs:
@@ -77,90 +45,47 @@ jobs:
         with:
           urls: |
             https://your-app-name.streamlit.app/
-            https://your-other-app.streamlit.app/
 ```
 
-### Inputs
+The action takes three inputs:
 
-| Input | Default | What it does |
-|---|---|---|
-| `urls` | *(empty)* | App URLs, one per line (or separated by spaces or commas). |
-| `file` | `apps.txt` | A file in your repository with one URL per line; `#` starts a comment. Needs `actions/checkout` before this step. Skipped if missing. |
-| `timeout` | `240` | Seconds to wait for each app to load. Cold starts of large apps can take a few minutes. |
+- `urls`: app URLs, one per line (spaces or commas also work).
+- `file`: a file in the repo with one URL per line, `#` for comments. Defaults to `apps.txt`
+  and is skipped if it doesn't exist. You need `actions/checkout` before the step to use it.
+- `timeout`: seconds to wait for each app, default `240`. Big apps can take a few minutes to
+  cold start.
 
-URLs from `urls` and `file` are combined. The step fails when any app ends as `failed`, so
-GitHub emails you (Settings → Notifications → Actions controls this).
-
-## Reading the results
-
-Open **Actions → Wake Streamlit apps →** any run. The summary shows:
-
-| Status | Meaning |
-|---|---|
-| 🟢 `awake` | The app was already running. Nothing to do. |
-| 🔵 `woken` | It was asleep; the button was pressed and the app has finished starting. |
-| 🔴 `failed` | It did not load within the timeout. Open the URL yourself: the app may have crashed, been deleted, or need a reboot from share.streamlit.io. |
-
-## FAQ
-
-### Public or private?
-
-Both work. The differences are GitHub's rules, not this tool's:
-
-| | Public repository | Private repository |
-|---|---|---|
-| Actions minutes | Unlimited, free | 2,000 free minutes per month. This workflow uses about 1–2 minutes per run, so roughly 250–400 per month on a 6-hour schedule. |
-| 60-day rule | GitHub turns scheduled workflows off after 60 days with no repository activity. The template's last step re-enables the workflow on every run, so you don't need to do anything. | Does not apply. |
-| Who sees your URLs | Everyone | Only you |
-
-If you only want to list the apps without showing them publicly, use a private repository.
-
-### Why every 6 hours?
-
-Apps sleep after about 12 hours with no visitors. GitHub sometimes starts scheduled runs late,
-especially at the top of the hour, so 6 hours leaves a wide margin. You can use `"17 */4 * * *"`
-for every 4 hours, but going more often than that doesn't help.
-
-### The first run happened later than expected
-
-Normal. A new schedule can take up to an hour to start, and scheduled runs are often delayed by
-several minutes. Use **Run workflow** to test immediately.
-
-### Does it work for apps that need a login?
-
-No. If a Streamlit app is shared only with specific viewers, the headless browser sees the
-sign-in page and the run reports `failed`. It works for public apps.
-
-### Does it work on my own domain or on other hosts?
-
-It looks for Streamlit's own wake button and Streamlit's app container, so it works for any
-Streamlit app URL, including Community Cloud apps behind a custom domain. Other hosts that
-sleep differently (Render, Hugging Face Spaces, ...) are not supported.
-
-### Run it on your own computer
+### Run it on your own machine
 
 ```bash
 pip install -r requirements.txt
 python -m playwright install chromium
-python wake.py apps.txt
+python wake.py apps.txt          # visit every app in the file
+python wake.py --list apps.txt   # just print the URLs it would visit
 ```
 
-## Fair use
+### What the results mean
 
-Streamlit Community Cloud is a free service. Please use this for your own apps that people
-actually visit, such as a portfolio, a class project or a demo, and keep the interval at a few
-hours. It is not meant for keeping a large number of idle apps running.
+Each run writes a table to the job summary:
 
-## How it is built
+- `awake`: the app was already up.
+- `woken`: it was asleep, the button got clicked, and the app finished starting.
+- `failed`: nothing loaded before the timeout. The run fails, so GitHub emails you. Usually the
+  app crashed or needs a reboot from share.streamlit.io.
 
-- [`wake.py`](wake.py): reads the URLs, drives Chromium with Playwright, writes the result table
-  to the job summary, and exits with 1 if any app failed.
-- [`action.yml`](action.yml): a composite action that counts the URLs first (and skips
-  installing a browser when there are none), installs Playwright and Chromium, and runs `wake.py`.
-- [`.github/workflows/wake.yml`](.github/workflows/wake.yml): the schedule used by the template.
-- [`tests/`](tests): unit tests for URL parsing; the `Test` workflow also runs the action against
-  a live app on every push.
+### Things worth knowing
+
+- **Why 6 hours:** apps sleep after ~12 hours, and GitHub often starts scheduled runs late, so 6
+  hours leaves plenty of margin. Running more often than every 4 hours doesn't buy anything.
+- **Public vs. private repo:** both work. Public repos get unlimited Actions minutes, but GitHub
+  disables schedules after 60 days with no commits; the template's last step re-enables the
+  workflow on every run so you don't have to think about it. A private repo uses roughly
+  250–400 of the 2,000 free minutes a month and keeps your app list hidden.
+- **Apps behind a login** won't work, since the browser just sees the sign-in page.
+- **Other hosts** (Render, Hugging Face Spaces, ...) sleep differently and aren't supported.
+- Please only use this for apps people actually visit, like a portfolio or a class demo.
+  Streamlit Cloud is free and I'd rather not be the reason it stops being free.
 
 ## License
 
-[MIT](LICENSE) © Paul Lai
+[MIT](LICENSE)
