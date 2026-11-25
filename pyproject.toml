@@ -1,0 +1,23 @@
+[project]
+name = "streamlit-wake"
+version = "1.1.0"
+description = "Keep Streamlit Community Cloud apps awake by waking them in a real browser."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Paul Lai" }]
+requires-python = ">=3.9"
+dependencies = ["playwright>=1.49"]
+
+[project.scripts]
+streamlit-wake = "streamlit_wake.cli:main"
+
+[project.urls]
+Homepage = "https://paul-lai0111.github.io/streamlit-wake/"
+Repository = "https://github.com/Paul-Lai0111/streamlit-wake"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
