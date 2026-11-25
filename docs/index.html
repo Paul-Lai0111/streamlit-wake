@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>streamlit-wake</title>
+<meta name="description" content="A small CLI and GitHub Action that keeps free Streamlit Community Cloud apps from falling asleep.">
+<style>
+  :root {
+    --bg: #fbfaf7; --text: #1f2328; --muted: #5b636e; --line: #e4e1da;
+    --code-bg: #f1efea; --term-bg: #16181d; --term-text: #d8dde4; --accent: #c2410c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a2e35;
+      --code-bg: #1e2228; --term-bg: #0d0f12; --term-text: #d8dde4; --accent: #fb923c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 56px 22px 80px; }
+  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 .3em; letter-spacing: -.01em; }
+  h2 { font-size: 1.35rem; margin: 2.4em 0 .6em; padding-top: .2em; }
+  h3 { font-size: 1.05rem; margin: 1.8em 0 .4em; }
+  p, li { color: var(--text); }
+  .lede { font-size: 1.15rem; color: var(--muted); margin-top: 0; }
+  .links { display: flex; gap: 18px; flex-wrap: wrap; margin: 22px 0 8px; font-size: .95rem; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  code { font: .88em/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg);
+         padding: .1em .35em; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto;
+        font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  pre.term { background: var(--term-bg); color: var(--term-text); }
+  pre.term .p { color: #7d8794; }
+  .shot { margin: 18px 0; }
+  .shot img { width: 100%; border: 1px solid var(--line); border-radius: 8px; display: block; }
+  .shot figcaption { color: var(--muted); font-size: .88rem; margin-top: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td:first-child { white-space: nowrap; }
+  .flow { font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
+           color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>streamlit-wake</h1>
+<p class="lede">A small command-line tool and GitHub Action that keeps free Streamlit apps from
+falling asleep, so the link on your résumé actually opens.</p>
+
+<div class="links">
+  <a href="https://github.com/Paul-Lai0111/streamlit-wake">Source on GitHub</a>
+  <a href="#install">Install</a>
+  <a href="#usage">Usage</a>
+  <a href="#how">How it works</a>
+</div>
+
+<h2>Why I built this</h2>
+<p>Most of my side projects end up on Streamlit Community Cloud because it's free and takes five
+minutes to deploy. One of them is
+<a href="https://paul-mlb-deeppitch-analytics.streamlit.app/">an MLB pitch analytics app</a>
+that I link from my résumé and send to people. The catch: Streamlit puts a free app to sleep
+after about 12 hours with no visitors. So a recruiter or classmate clicks my link and lands on
+Streamlit's "this app has gone to sleep" page instead of the app.</p>
+
+<figure class="shot">
+  <img onerror="this.closest('figure').remove()" src="img/asleep.png" alt="Streamlit's 'This app has gone to sleep due to inactivity' page with a 'Yes, get this app back up!' button">
+  <figcaption>What a visitor sees when the app is asleep. Most people don't click the button. They just leave.</figcaption>
+</figure>
+
+<p>The usual advice online is to point an uptime monitor or a <code>curl</code> cron job at the
+app. I tried that and it doesn't work. The sleep page is an ordinary web page that returns
+200, so a ping can't tell asleep from awake. And Streamlit only restarts the app when someone
+presses <em>"Yes, get this app back up!"</em> in a browser, which a ping never does.</p>
+
+<p>So streamlit-wake acts like a visitor: it opens the app in a real (headless) browser, presses
+the button if it's there, and waits until the app has actually rendered. Running it on a
+GitHub Actions schedule means my apps stay up without my laptop being on, and I get an email if
+one of them breaks.</p>
+
+<h2 id="install">Install</h2>
+<p>It's a Python package managed with <code>uv</code>. Add it to a project, then download the
+Chromium build it drives (one time, about 100 MB):</p>
+<pre><code>uv add "git+https://github.com/Paul-Lai0111/streamlit-wake.git"
+uv run streamlit-wake install-browser</code></pre>
+<p>Or install it as a standalone command with
+<code>uv tool install git+https://github.com/Paul-Lai0111/streamlit-wake.git</code> and drop the
+<code>uv run</code> prefix.</p>
+
+<h2 id="usage">Usage</h2>
+
+<h3>Wake an app right now</h3>
+<p>I use this before an interview or before I paste a link in a chat, so the app is already
+warm when they open it:</p>
+<pre class="term"><span class="p">$</span> streamlit-wake check https://paul-mlb-deeppitch-analytics.streamlit.app/ https://ocean-soundscape-ml-paullai.streamlit.app/
+Visiting 2 app(s), up to 240s each...
+🟢 awake      5s  https://paul-mlb-deeppitch-analytics.streamlit.app/
+🟢 awake      5s  https://ocean-soundscape-ml-paullai.streamlit.app/
+Done: 2 up (0 woken), 0 failed.</pre>
+<p>If an app was asleep you'll see <code>🔵 woken</code> instead, usually after 30 to 90 seconds
+while it boots.</p>
+
+<h3>Keep a list of apps</h3>
+<p>Put your URLs in <code>apps.txt</code>, one per line. Lines starting with <code>#</code> are
+comments, and the <code>https://</code> is optional.</p>
+<pre><code># my Streamlit apps
+https://paul-mlb-deeppitch-analytics.streamlit.app/
+ocean-soundscape-ml-paullai.streamlit.app</code></pre>
+<pre class="term"><span class="p">$</span> streamlit-wake list
+https://paul-mlb-deeppitch-analytics.streamlit.app/
+https://ocean-soundscape-ml-paullai.streamlit.app
+<span class="p">$</span> streamlit-wake run
+<span class="p">$</span> streamlit-wake run other-apps.txt --timeout 300 --url https://one-more.streamlit.app/</pre>
+
+<h3>Put it on a schedule</h3>
+<p>This is the part that solves the problem. Run <code>init</code> inside any GitHub repository
+you own (a portfolio repo, or the app's own repo). It writes
+<code>.github/workflows/wake.yml</code> and adds the URLs to <code>apps.txt</code>:</p>
+<pre class="term"><span class="p">$</span> cd my-portfolio
+<span class="p">$</span> streamlit-wake init https://paul-mlb-deeppitch-analytics.streamlit.app/ --every 6
+wrote   .github/workflows/wake.yml
+wrote   apps.txt (1 app(s))
+
+Next: commit both files and push. Then open the Actions tab on GitHub and press 'Run workflow' once to try it.
+<span class="p">$</span> git add .github/workflows/wake.yml apps.txt
+<span class="p">$</span> git commit -m "Keep my apps awake" &amp;&amp; git push</pre>
+<p>From then on GitHub runs it every 6 hours. Each run leaves a summary table:</p>
+
+<figure class="shot">
+  <img onerror="this.closest('figure').remove()" src="img/actions-summary.png" alt="GitHub Actions job summary listing each app with its status: awake, woken or failed">
+  <figcaption>The job summary of a scheduled run.</figcaption>
+</figure>
+
+<h3>All commands</h3>
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td><code>check URL...</code></td><td>Wake the given apps now.</td></tr>
+  <tr><td><code>run [FILE]</code></td><td>Wake every app in <code>FILE</code> (default <code>apps.txt</code>). <code>--url</code> adds more.</td></tr>
+  <tr><td><code>list [FILE]</code></td><td>Print the URLs <code>run</code> would visit, without opening a browser.</td></tr>
+  <tr><td><code>init [URL...]</code></td><td>Write the GitHub Actions workflow and add URLs to <code>apps.txt</code>. <code>--every HOURS</code> (default 6), <code>--force</code> to overwrite.</td></tr>
+  <tr><td><code>install-browser</code></td><td>Download the Chromium build Playwright uses.</td></tr>
+</table>
+<p><code>run</code>, <code>check</code> and <code>init</code> take <code>--timeout SECONDS</code>
+(default 240). <code>run</code> and <code>check</code> exit with status 1 if any app failed,
+which is what turns a scheduled run red and makes GitHub email you.</p>
+
+<h3>What the statuses mean</h3>
+<table>
+  <tr><th>Status</th><th>Meaning</th></tr>
+  <tr><td>🟢 <code>awake</code></td><td>The app was already running.</td></tr>
+  <tr><td>🔵 <code>woken</code></td><td>It was asleep. The button was pressed and the app finished starting.</td></tr>
+  <tr><td>🔴 <code>failed</code></td><td>Nothing loaded before the timeout. Usually the app crashed or needs a reboot from share.streamlit.io.</td></tr>
+</table>
+
+<h3>Without installing anything</h3>
+<p>The repo is also a GitHub Action, so you can skip the CLI and add one step to a workflow:</p>
+<pre><code>- uses: Paul-Lai0111/streamlit-wake@v1
+  with:
+    urls: |
+      https://your-app-name.streamlit.app/</code></pre>
+
+<h2 id="how">How it works</h2>
+<pre class="flow">for each URL
+  open the page in headless Chromium (Playwright)
+  ├─ Streamlit's app container is on the page ...... awake  🟢
+  ├─ the wake button is on the page → press it,
+  │  keep polling until the app container shows ... woken  🔵
+  └─ neither within the timeout ..................... failed 🔴</pre>
+<p>The app lives inside an iframe on <code>*.streamlit.app</code>, so the check looks for
+<code>[data-testid="stAppViewContainer"]</code> in every frame, not just the top page. All apps
+share one browser, and a crash on one app is recorded as <code>failed</code> without stopping
+the others.</p>
+<p>A few decisions that came from actually running it:</p>
+<ul>
+  <li><strong>Every 6 hours, at minute 17.</strong> Apps sleep after ~12 hours, and GitHub often
+  starts scheduled runs late, especially on the hour. Six hours leaves plenty of margin.</li>
+  <li><strong>The 60-day rule.</strong> GitHub disables schedules in a public repo after 60 days
+  without commits. The generated workflow re-enables itself through the API on every run.</li>
+  <li><strong>Private repos are fine.</strong> A run takes 1–2 minutes, so a 6-hour schedule uses
+  roughly 250–400 of the 2,000 free Actions minutes a month.</li>
+</ul>
+
+<h3>Limits</h3>
+<ul>
+  <li>Apps that require a Streamlit login show a sign-in page, so they come back as
+  <code>failed</code>.</li>
+  <li>Other hosts that sleep differently (Render, Hugging Face Spaces) aren't supported.</li>
+  <li>Please use it for apps people actually visit. Streamlit Cloud is free, and it should stay that
+  way.</li>
+</ul>
+
+<footer>
+  Built by Paul Lai · <a href="https://github.com/Paul-Lai0111/streamlit-wake">github.com/Paul-Lai0111/streamlit-wake</a> · MIT license
+</footer>
+
+</main>
+</body>
+</html>
