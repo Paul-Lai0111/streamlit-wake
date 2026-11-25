@@ -10,27 +10,33 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
       - run: uv run pytest -q
 
   # Installs the package the way the course autograder does, from the git URL.
   install:
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: false # nothing to cache: no checkout here
+          ignore-empty-workdir: true
       - run: |
           uv init --quiet demo && cd demo
           uv add "git+https://github.com/${{ github.repository }}.git@${{ github.sha }}"
           uv run streamlit-wake --version
 
-  # Runs the action exactly as a user would, against a live public Streamlit app.
+  # Runs the action exactly as a user would, against my own live Streamlit apps.
   action:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./
         with:
           file: does-not-exist.txt
-          urls: https://ocean-soundscape-ml-paullai.streamlit.app/
+          urls: |
+            https://paul-mlb-deeppitch-analytics.streamlit.app/
+            https://ocean-soundscape-ml-paullai.streamlit.app/
+            https://semiconductor-yield-anomaly-detection-paullai.streamlit.app/
