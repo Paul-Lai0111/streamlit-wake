@@ -57,6 +57,7 @@ asleep, so the link people click actually opens the app.</p>
 
 <div class="links">
   <a href="https://github.com/Paul-Lai0111/streamlit-wake">Source on GitHub</a>
+  <a href="#why">Why I built this</a>
   <a href="#install">Install</a>
   <a href="#usage">Usage</a>
   <a href="#how">How it works</a>
@@ -82,6 +83,18 @@ does.</p>
 presses the button if it is there, and waits until the app has actually rendered. Put on a
 GitHub Actions schedule, it keeps the apps awake without anyone's laptop being on, and GitHub
 sends an email if one of them breaks.</p>
+
+<h2 id="why">Why I built this</h2>
+<p>I have a few Streamlit apps linked from my personal website and my résumé: a baseball
+pitch analytics dashboard, an ocean soundscape model, a semiconductor yield demo. They're
+there so recruiters and classmates can click through and try them. But almost every time
+someone did, the app had been idle long enough to fall asleep, and they landed on the
+"Zzzz" page instead. Most people don't press the button and wait a minute. They just leave.</p>
+
+<p>In class, the instructor brought up this exact weakness of Streamlit Community Cloud: it's
+free and easy to deploy to, but apps go to sleep when nobody's using them. That was the
+push I needed to stop waking my apps by hand before every interview and fix it properly.
+streamlit-wake now runs on a schedule in GitHub Actions and keeps all three of my apps up.</p>
 
 <h2 id="install">Install</h2>
 <p>It's a Python package managed with <code>uv</code>. Add it to a project, then download the
