@@ -11,10 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install pytest && pytest -q
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run pytest -q
+
+  # Installs the package the way the course autograder does, from the git URL.
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v6
+      - run: |
+          uv init --quiet demo && cd demo
+          uv add "git+https://github.com/${{ github.repository }}.git@${{ github.sha }}"
+          uv run streamlit-wake --version
 
   # Runs the action exactly as a user would, against a live public Streamlit app.
   action:
