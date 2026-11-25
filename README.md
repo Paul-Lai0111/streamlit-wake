@@ -1,37 +1,11 @@
 # streamlit-wake
 
-All kinds of people deploy apps on Streamlit Community Cloud: students sharing class projects,
-data scientists showing a model demo, researchers publishing an interactive figure, job seekers
-linking a portfolio from their résumé. It is free and takes minutes to set up, but sooner or later
-everyone hits the same problem: after about 12 hours without visitors the app goes to sleep, and
-the next person who opens the link sees "This app has gone to sleep due to inactivity" instead of
-the app. streamlit-wake is a Python command-line tool (and GitHub Action) that opens each app in a
-headless browser, clicks the wake button when it is there, waits until the app has actually
-loaded, and can set this up to run on a schedule so the apps stay awake on their own.
+Free Streamlit Community Cloud apps go to sleep after about 12 hours without visitors, so the
+next person who clicks your link sees "This app has gone to sleep due to inactivity" and usually
+closes the tab. streamlit-wake opens your apps in a headless browser, presses the wake button when
+it's there, and can set up a GitHub Actions schedule that keeps them awake on its own.
 
 ## Usage
-
-### Background
-
-Streamlit Community Cloud is where a lot of students and data scientists put their side projects:
-dashboards, model demos, analyses linked from a résumé or a class report. The sleep page is easy
-to ignore when you are the developer, but it matters for everyone else. A recruiter, a classmate
-or a grader who clicks the link usually does not press the button and wait a minute for the app
-to boot. They just close the tab.
-
-The common advice online is to point an uptime monitor or a `curl` cron job at the app. That does
-not work, for two reasons:
-
-- The sleep page is a normal web page that returns HTTP 200, so a ping cannot tell a sleeping app
-  from a running one.
-- Streamlit restarts the app only when a visitor presses **"Yes, get this app back up!"** in a
-  browser. A ping never presses anything.
-
-So streamlit-wake behaves like a visitor. It drives headless Chromium through
-[Playwright](https://playwright.dev/), presses the wake button if it is shown, and checks that
-Streamlit's app container has rendered before reporting success. It started as a small script
-that kept a few personal apps awake, and grew into a general tool that works for any public
-Streamlit app.
 
 ### Installation
 
@@ -179,6 +153,8 @@ and triggers GitHub's email.
 
 ### Notes and limits
 
+- A plain HTTP ping can't wake an app: the sleep page returns 200, and only pressing the wake
+  button restarts it.
 - **Why every 6 hours:** apps sleep after about 12 hours, and GitHub often starts scheduled runs
   a few minutes late, so 6 hours leaves a wide margin. Running more often than every 4 hours
   adds nothing.
