@@ -1,6 +1,6 @@
 [project]
 name = "streamlit-wake"
-version = "1.1.0"
+version = "1.2.0"
 description = "Keep Streamlit Community Cloud apps awake by waking them in a real browser."
 readme = "README.md"
 license = "MIT"
