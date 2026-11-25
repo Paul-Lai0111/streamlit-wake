@@ -112,6 +112,7 @@ def cmd_init(args) -> int:
     if not Path(".git").exists():
         print("warning: this folder is not the root of a git repository.", file=sys.stderr)
 
+    changed = False
     workflow = WORKFLOW_PATH
     if workflow.exists() and not args.force:
         print(f"kept    {workflow}")
@@ -123,6 +124,7 @@ def cmd_init(args) -> int:
         workflow.write_text(WORKFLOW.format(
             minute=17, hours=every, apps_file=apps_file, timeout=timeout))
         print(f"wrote   {workflow}")
+        changed = True
 
     apps = Path(apps_file)
     existing = collect_urls(apps) if apps.exists() else []
@@ -130,15 +132,20 @@ def cmd_init(args) -> int:
     if not apps.exists():
         apps.write_text(APPS_HEADER + "".join(u + "\n" for u in new))
         print(f"wrote   {apps} ({len(new)} app(s))")
+        changed = True
     elif new:
         with apps.open("a") as f:
             f.writelines(u + "\n" for u in new)
         print(f"updated {apps} (+{len(new)} app(s))")
+        changed = True
     else:
         print(f"kept    {apps}")
 
-    print("\nNext: commit both files and push. Then open the Actions tab on GitHub and press "
-          "'Run workflow' once to try it.")
+    if changed:
+        print("\nNext: commit both files and push. Then open the Actions tab on GitHub and press "
+              "'Run workflow' once to try it.")
+    else:
+        print("Nothing to change.")
     return 0
 
 

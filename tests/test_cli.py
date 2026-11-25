@@ -47,6 +47,16 @@ def test_init_keeps_existing_workflow_and_adds_urls(tmp_path, monkeypatch, capsy
     assert apps.count("https://a.streamlit.app") == 1 and "https://b.streamlit.app" in apps
 
 
+def test_init_with_nothing_new_says_so(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "a.streamlit.app"]) == 0
+    assert "Next:" in capsys.readouterr().out
+    assert main(["init", "a.streamlit.app"]) == 0
+    out = capsys.readouterr().out
+    assert "Nothing to change." in out
+    assert "Next:" not in out
+
+
 def test_init_says_when_options_are_not_applied(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
