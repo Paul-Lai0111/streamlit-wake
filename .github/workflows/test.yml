@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
       - run: uv run pytest -q
 
   # Installs the package the way the course autograder does, from the git URL.
   install:
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: false # nothing to cache: no checkout here
           ignore-empty-workdir: true
