@@ -27,7 +27,7 @@ jobs:
           uv add "git+https://github.com/${{ github.repository }}.git@${{ github.sha }}"
           uv run streamlit-wake --version
 
-  # Runs the action exactly as a user would, against my own live Streamlit apps.
+  # Runs the action exactly as a user would, against a live Streamlit app.
   action:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -36,7 +36,4 @@ jobs:
       - uses: ./
         with:
           file: does-not-exist.txt
-          urls: |
-            https://paul-mlb-deeppitch-analytics.streamlit.app/
-            https://ocean-soundscape-ml-paullai.streamlit.app/
-            https://semiconductor-yield-anomaly-detection-paullai.streamlit.app/
+          urls: https://paul-mlb-deeppitch-analytics.streamlit.app/
