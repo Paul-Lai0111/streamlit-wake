@@ -97,7 +97,14 @@ def cmd_list(args) -> int:
 
 
 def cmd_init(args) -> int:
-    if not (24 % args.every == 0 and 1 <= args.every <= 12):
+    # None means "not given on the command line", so a kept workflow can say what was ignored.
+    explicit = [f"--{name}" for name in ("every", "timeout", "file")
+                if getattr(args, name) is not None]
+    every = 6 if args.every is None else args.every
+    timeout = DEFAULT_TIMEOUT if args.timeout is None else args.timeout
+    apps_file = args.file or "apps.txt"
+
+    if not (24 % every == 0 and 1 <= every <= 12):
         print("error: --every must divide 24 and be at most 12 (e.g. 4, 6, 8, 12)", file=sys.stderr)
         return 2
     if not Path(".git").exists():
@@ -105,14 +112,17 @@ def cmd_init(args) -> int:
 
     workflow = WORKFLOW_PATH
     if workflow.exists() and not args.force:
-        print(f"error: {workflow} already exists (use --force to overwrite)", file=sys.stderr)
-        return 2
-    workflow.parent.mkdir(parents=True, exist_ok=True)
-    workflow.write_text(WORKFLOW.format(
-        minute=17, hours=args.every, apps_file=args.file, timeout=args.timeout))
-    print(f"wrote   {workflow}")
+        print(f"kept    {workflow}")
+        if explicit:
+            print(f"note    {', '.join(explicit)} not applied to the existing workflow "
+                  "(use --force to rewrite it)")
+    else:
+        workflow.parent.mkdir(parents=True, exist_ok=True)
+        workflow.write_text(WORKFLOW.format(
+            minute=17, hours=every, apps_file=apps_file, timeout=timeout))
+        print(f"wrote   {workflow}")
 
-    apps = Path(args.file)
+    apps = Path(apps_file)
     existing = collect_urls(apps) if apps.exists() else []
     new = [u for u in collect_urls(None, args.url) if u not in existing]
     if not apps.exists():
@@ -164,11 +174,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("init", help="set up a GitHub Actions schedule in the current repo")
     p.add_argument("url", nargs="*", help="app URLs to add to the list")
-    p.add_argument("--every", type=int, default=6, metavar="HOURS",
-                   help="hours between runs (default 6)")
-    p.add_argument("--file", default="apps.txt", help="URL list to use (default apps.txt)")
-    p.add_argument("--force", action="store_true", help="overwrite an existing workflow")
-    add_timeout(p)
+    p.add_argument("--every", type=int, metavar="HOURS", help="hours between runs (default 6)")
+    p.add_argument("--file", help="URL list to use (default apps.txt)")
+    p.add_argument("--force", action="store_true",
+                   help="rewrite the workflow if it already exists (otherwise it is kept)")
+    p.add_argument("--timeout", type=int, metavar="SECONDS",
+                   help=f"how long to wait for each app (default {DEFAULT_TIMEOUT})")
     p.set_defaults(func=cmd_init)
 
     p = sub.add_parser("install-browser", help="download the Chromium build Playwright uses")

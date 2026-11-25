@@ -30,13 +30,37 @@ def test_init_writes_workflow_and_apps(tmp_path, monkeypatch):
     assert "https://my-app.streamlit.app" in (tmp_path / "apps.txt").read_text()
 
 
-def test_init_refuses_to_overwrite_and_merges_apps(tmp_path, monkeypatch):
+def test_init_keeps_existing_workflow_and_adds_urls(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
-    assert main(["init", "a.streamlit.app"]) == 0
-    assert main(["init", "b.streamlit.app"]) == 2
-    assert main(["init", "a.streamlit.app", "b.streamlit.app", "--force"]) == 0
+    assert main(["init", "a.streamlit.app", "--every", "4"]) == 0
+    workflow = tmp_path / ".github/workflows/wake.yml"
+    before = workflow.read_text()
+    capsys.readouterr()
+
+    assert main(["init", "a.streamlit.app", "b.streamlit.app"]) == 0
+    out = capsys.readouterr().out
+    assert "kept    .github/workflows/wake.yml" in out
+    assert "not applied" not in out
+    assert workflow.read_text() == before
     apps = (tmp_path / "apps.txt").read_text()
     assert apps.count("https://a.streamlit.app") == 1 and "https://b.streamlit.app" in apps
+
+
+def test_init_says_when_options_are_not_applied(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init"]) == 0
+    capsys.readouterr()
+    assert main(["init", "--every", "12", "--timeout", "300"]) == 0
+    out = capsys.readouterr().out
+    assert "--every, --timeout not applied" in out and "--force" in out
+    assert 'cron: "17 */6 * * *"' in (tmp_path / ".github/workflows/wake.yml").read_text()
+
+
+def test_init_force_rewrites_workflow(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init"]) == 0
+    assert main(["init", "--every", "12", "--force"]) == 0
+    assert 'cron: "17 */12 * * *"' in (tmp_path / ".github/workflows/wake.yml").read_text()
 
 
 def test_init_rejects_bad_interval(tmp_path, monkeypatch):

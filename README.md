@@ -98,8 +98,9 @@ Next: commit both files and push. Then open the Actions tab on GitHub and press 
 
 `init` writes a workflow file and adds the URLs to `apps.txt` (creating it if needed, and never
 adding the same URL twice). `--every` sets the hours between runs and must divide 24 (4, 6, 8 or
-12; the default is 6). It refuses to overwrite an existing workflow unless `--force` is given.
-After that, the two files are committed and pushed:
+12; the default is 6). Running `init` again is safe: an existing workflow is kept as it is and
+only new URLs are added to `apps.txt`. To change the schedule or timeout of an existing workflow,
+add `--force`. After that, the two files are committed and pushed:
 
 ```bash
 git add .github/workflows/wake.yml apps.txt
@@ -134,7 +135,7 @@ enable Actions.
 | `check URL...` | Wake the given apps now. |
 | `run [FILE]` | Wake every app in `FILE` (default `apps.txt`). `--url` adds more. |
 | `list [FILE]` | Print the URLs `run` would visit, without opening a browser. |
-| `init [URL...]` | Write `.github/workflows/wake.yml` and add the URLs to `apps.txt`. Options: `--every HOURS`, `--file`, `--force`. |
+| `init [URL...]` | Write `.github/workflows/wake.yml` (kept if it exists) and add the URLs to `apps.txt`. Options: `--every HOURS`, `--file`, `--force` to rewrite the workflow. |
 | `install-browser` | Download the Chromium build that Playwright uses. |
 
 `run`, `check` and `init` accept `--timeout SECONDS`. `streamlit-wake --help` and

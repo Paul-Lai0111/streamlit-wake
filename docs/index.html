@@ -155,7 +155,7 @@ Next: commit both files and push. Then open the Actions tab on GitHub and press 
   <tr><td><code>check URL...</code></td><td>Wake the given apps now.</td></tr>
   <tr><td><code>run [FILE]</code></td><td>Wake every app in <code>FILE</code> (default <code>apps.txt</code>). <code>--url</code> adds more.</td></tr>
   <tr><td><code>list [FILE]</code></td><td>Print the URLs <code>run</code> would visit, without opening a browser.</td></tr>
-  <tr><td><code>init [URL...]</code></td><td>Write the GitHub Actions workflow and add URLs to <code>apps.txt</code>. <code>--every HOURS</code> (default 6), <code>--force</code> to overwrite.</td></tr>
+  <tr><td><code>init [URL...]</code></td><td>Write the GitHub Actions workflow and add URLs to <code>apps.txt</code>. <code>--every HOURS</code> (default 6). An existing workflow is kept; <code>--force</code> rewrites it.</td></tr>
   <tr><td><code>install-browser</code></td><td>Download the Chromium build Playwright uses.</td></tr>
 </table>
 <p><code>run</code>, <code>check</code> and <code>init</code> take <code>--timeout SECONDS</code>
