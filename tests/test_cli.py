@@ -1,3 +1,4 @@
+from streamlit_wake import cli
 from streamlit_wake.cli import main
 
 
@@ -66,3 +67,11 @@ def test_init_force_rewrites_workflow(tmp_path, monkeypatch):
 def test_init_rejects_bad_interval(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main(["init", "--every", "5"]) == 2
+
+
+def test_check_ignores_wake_urls(monkeypatch):
+    monkeypatch.setenv("WAKE_URLS", "https://from-env.streamlit.app/")
+    visited = []
+    monkeypatch.setattr(cli, "_wake", lambda urls, timeout: visited.extend(urls) or 0)
+    assert main(["check", "a.streamlit.app"]) == 0
+    assert visited == ["https://a.streamlit.app"]

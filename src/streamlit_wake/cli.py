@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from . import __version__
-from .core import DEFAULT_TIMEOUT, ICONS, Result, collect_urls, wake_all, write_github_summary
+from .core import (DEFAULT_TIMEOUT, ICONS, Result, collect_urls, parse_urls, wake_all,
+                   write_github_summary)
 
 WORKFLOW_PATH = Path(".github/workflows/wake.yml")
 
@@ -87,7 +88,8 @@ def cmd_run(args) -> int:
 
 
 def cmd_check(args) -> int:
-    return _wake(collect_urls(None, args.urls), args.timeout)
+    # Only the URLs on the command line; WAKE_URLS is for `run`.
+    return _wake(parse_urls("\n".join(args.urls)), args.timeout)
 
 
 def cmd_list(args) -> int:
