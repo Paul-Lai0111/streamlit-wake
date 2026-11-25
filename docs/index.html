@@ -63,15 +63,13 @@ asleep, so the link people click actually opens the app.</p>
 </div>
 
 <h2>The problem</h2>
-<p>All kinds of people deploy apps on Streamlit Community Cloud: students sharing class projects,
-data scientists showing a model demo, researchers publishing an interactive figure, job seekers
-linking a portfolio from their résumé. It is free and takes minutes to set up, but sooner or later
-everyone hits the same problem. After about 12 hours without visitors, Streamlit puts the app to
-sleep, and the next person who opens the link lands on this page instead of the app:</p>
+<p>Streamlit Community Cloud is free and quick to deploy to. The catch is that an app goes to
+sleep after about 12 hours without visitors. When that happens, the person who clicks your link
+doesn't see your app. They see this page:</p>
 
 <figure class="shot">
   <img onerror="this.closest('figure').remove()" src="img/asleep.png" alt="Streamlit's 'This app has gone to sleep due to inactivity' page with a 'Yes, get this app back up!' button">
-  <figcaption>What a visitor sees when the app is asleep. A recruiter, classmate or grader usually doesn't press the button and wait. They just close the tab.</figcaption>
+  <figcaption>What the person who clicks your link sees when the app is asleep. Most people don't press the button and wait. They close the tab.</figcaption>
 </figure>
 
 <p>The common advice online is to point an uptime monitor or a <code>curl</code> cron job at the
