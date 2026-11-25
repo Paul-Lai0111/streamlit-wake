@@ -52,8 +52,8 @@
 <main>
 
 <h1>streamlit-wake</h1>
-<p class="lede">A small command-line tool and GitHub Action that keeps free Streamlit apps from
-falling asleep, so the link on your résumé actually opens.</p>
+<p class="lede">A command-line tool and GitHub Action that keeps free Streamlit apps from falling
+asleep, so the link people click actually opens the app.</p>
 
 <div class="links">
   <a href="https://github.com/Paul-Lai0111/streamlit-wake">Source on GitHub</a>
@@ -62,28 +62,29 @@ falling asleep, so the link on your résumé actually opens.</p>
   <a href="#how">How it works</a>
 </div>
 
-<h2>Why I built this</h2>
-<p>Most of my side projects end up on Streamlit Community Cloud because it's free and takes five
-minutes to deploy. One of them is
-<a href="https://paul-mlb-deeppitch-analytics.streamlit.app/">an MLB pitch analytics app</a>
-that I link from my résumé and send to people. The catch: Streamlit puts a free app to sleep
-after about 12 hours with no visitors. So a recruiter or classmate clicks my link and lands on
-Streamlit's "this app has gone to sleep" page instead of the app.</p>
+<h2>The problem</h2>
+<p>All kinds of people deploy apps on Streamlit Community Cloud: students sharing class projects,
+data scientists showing a model demo, researchers publishing an interactive figure, job seekers
+linking a portfolio from their résumé. It is free and takes minutes to set up, but sooner or later
+everyone hits the same problem. After about 12 hours without visitors, Streamlit puts the app to
+sleep, and the next person who opens the link lands on this page instead of the app:</p>
 
 <figure class="shot">
   <img onerror="this.closest('figure').remove()" src="img/asleep.png" alt="Streamlit's 'This app has gone to sleep due to inactivity' page with a 'Yes, get this app back up!' button">
-  <figcaption>What a visitor sees when the app is asleep. Most people don't click the button. They just leave.</figcaption>
+  <figcaption>What a visitor sees when the app is asleep. A recruiter, classmate or grader usually doesn't press the button and wait. They just close the tab.</figcaption>
 </figure>
 
-<p>The usual advice online is to point an uptime monitor or a <code>curl</code> cron job at the
-app. I tried that and it doesn't work. The sleep page is an ordinary web page that returns
-200, so a ping can't tell asleep from awake. And Streamlit only restarts the app when someone
-presses <em>"Yes, get this app back up!"</em> in a browser, which a ping never does.</p>
+<p>The common advice online is to point an uptime monitor or a <code>curl</code> cron job at the
+app. That does not work, for two reasons. The sleep page is an ordinary web page that returns
+HTTP 200, so a ping cannot tell a sleeping app from a running one. And Streamlit only restarts the
+app when someone presses <em>"Yes, get this app back up!"</em> in a browser, which a ping never
+does.</p>
 
-<p>So streamlit-wake acts like a visitor: it opens the app in a real (headless) browser, presses
-the button if it's there, and waits until the app has actually rendered. Running it on a
-GitHub Actions schedule means my apps stay up without my laptop being on, and I get an email if
-one of them breaks.</p>
+<p>So streamlit-wake behaves like a visitor. It opens the app in a real (headless) browser,
+presses the button if it is there, and waits until the app has actually rendered. Put on a
+GitHub Actions schedule, it keeps the apps awake without anyone's laptop being on, and GitHub
+sends an email if one of them breaks. It started as a small script that kept a few personal apps
+awake, and grew into a general tool that works for any public Streamlit app.</p>
 
 <h2 id="install">Install</h2>
 <p>It's a Python package managed with <code>uv</code>. Add it to a project, then download the
@@ -97,8 +98,8 @@ uv run streamlit-wake install-browser</code></pre>
 <h2 id="usage">Usage</h2>
 
 <h3>Wake an app right now</h3>
-<p>I use this before an interview or before I paste a link in a chat, so the app is already
-warm when they open it:</p>
+<p>Handy right before a demo, an interview or pasting a link into a chat, so the app is already
+warm when the other person opens it:</p>
 <pre class="term"><span class="p">$</span> streamlit-wake check https://paul-mlb-deeppitch-analytics.streamlit.app/ https://ocean-soundscape-ml-paullai.streamlit.app/
 Visiting 2 app(s), up to 240s each...
 🟢 awake      5s  https://paul-mlb-deeppitch-analytics.streamlit.app/
@@ -110,7 +111,7 @@ while it boots.</p>
 <h3>Keep a list of apps</h3>
 <p>Put your URLs in <code>apps.txt</code>, one per line. Lines starting with <code>#</code> are
 comments, and the <code>https://</code> is optional.</p>
-<pre><code># my Streamlit apps
+<pre><code># Streamlit apps to keep awake
 https://paul-mlb-deeppitch-analytics.streamlit.app/
 ocean-soundscape-ml-paullai.streamlit.app</code></pre>
 <pre class="term"><span class="p">$</span> streamlit-wake list
@@ -135,7 +136,7 @@ Next: commit both files and push. Then open the Actions tab on GitHub and press 
 
 <figure class="shot">
   <img onerror="this.closest('figure').remove()" src="img/actions-summary.png" alt="GitHub Actions job summary listing each app with its status: awake, woken or failed">
-  <figcaption>A run from the private repo that keeps my own three apps awake.</figcaption>
+  <figcaption>The job summary of a run that keeps three apps awake.</figcaption>
 </figure>
 
 <h3>All commands</h3>
