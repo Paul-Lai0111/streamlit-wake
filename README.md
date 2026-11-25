@@ -10,63 +10,75 @@ Chromium, clicks that button if it's there, and waits until the app has actually
 
 ## Usage
 
-### Start from this repo
-
-1. Click **Use this template → Create a new repository**.
-2. Edit `apps.txt` in the new repo and put one app URL per line:
-
-   ```text
-   https://your-app-name.streamlit.app/
-   https://your-other-app.streamlit.app/
-   ```
-
-3. Go to the **Actions** tab and enable workflows if GitHub asks.
-4. Run **Wake Streamlit apps → Run workflow** once to check it works. After that it runs on its
-   own every 6 hours.
-
-### Add it to a repo you already have
-
-Put this in `.github/workflows/wake.yml` (in your app's own repo, for example):
-
-```yaml
-name: Wake Streamlit apps
-
-on:
-  schedule:
-    - cron: "17 */6 * * *" # every 6 hours, UTC
-  workflow_dispatch:
-
-jobs:
-  wake:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: Paul-Lai0111/streamlit-wake@v1
-        with:
-          urls: |
-            https://your-app-name.streamlit.app/
-```
-
-The action takes three inputs:
-
-- `urls`: app URLs, one per line (spaces or commas also work).
-- `file`: a file in the repo with one URL per line, `#` for comments. Defaults to `apps.txt`
-  and is skipped if it doesn't exist. You need `actions/checkout` before the step to use it.
-- `timeout`: seconds to wait for each app, default `240`. Big apps can take a few minutes to
-  cold start.
-
-### Run it on your own machine
+Install it with uv (or `pip install git+...`), then download the browser it drives once:
 
 ```bash
-pip install -r requirements.txt
-python -m playwright install chromium
-python wake.py apps.txt          # visit every app in the file
-python wake.py --list apps.txt   # just print the URLs it would visit
+uv add "git+https://github.com/Paul-Lai0111/streamlit-wake.git"
+uv run streamlit-wake install-browser
+```
+
+Wake a couple of apps right now, for example before sending a link to someone:
+
+```bash
+uv run streamlit-wake check https://paul-mlb-deeppitch-analytics.streamlit.app/
+```
+
+```text
+Visiting 1 app(s), up to 240s each...
+🟢 awake      5s  https://paul-mlb-deeppitch-analytics.streamlit.app/
+Done: 1 up (0 woken), 0 failed.
+```
+
+Keep a list of apps in `apps.txt` (one URL per line, `#` for comments) and visit all of them:
+
+```bash
+uv run streamlit-wake list            # print the URLs it would visit
+uv run streamlit-wake run             # visit everything in apps.txt
+uv run streamlit-wake run other.txt --timeout 300
+```
+
+The part I actually rely on is the schedule. Inside one of your repos, `init` writes a GitHub
+Actions workflow and an `apps.txt`, so GitHub wakes the apps every few hours without your laptop
+being on:
+
+```bash
+cd my-portfolio
+uv run streamlit-wake init https://your-app.streamlit.app/ --every 6
+git add .github/workflows/wake.yml apps.txt && git commit -m "Keep my apps awake" && git push
+```
+
+Then open the **Actions** tab and press **Run workflow** once to see it work.
+
+| Command | What it does |
+|---|---|
+| `check URL...` | Wake the given apps now. |
+| `run [FILE]` | Wake every app in `FILE` (default `apps.txt`); `--url` adds more. |
+| `list [FILE]` | Print the URLs `run` would visit, without opening a browser. |
+| `init [URL...]` | Write `.github/workflows/wake.yml` and add the URLs to `apps.txt`. `--every` sets the hours between runs (default 6). |
+| `install-browser` | Download the Chromium build Playwright uses. |
+
+`run`, `check` and `init` take `--timeout SECONDS` (default 240), since a big app can take a few
+minutes to cold start. `run` and `check` exit with status 1 if any app failed, so a scheduled
+run shows up red and GitHub emails you.
+
+### Using the GitHub Action directly
+
+If you'd rather not install anything, use this repo as a template (**Use this template**, list
+your URLs in `apps.txt`, enable Actions), or add the action to an existing workflow:
+
+```yaml
+- uses: Paul-Lai0111/streamlit-wake@v1
+  with:
+    urls: |
+      https://your-app-name.streamlit.app/
+    # file: apps.txt   (default; needs actions/checkout first)
+    # timeout: "240"
 ```
 
 ### What the results mean
 
-Each run writes a table to the job summary:
+Every run prints one line per app, and on GitHub Actions it also writes a table to the job
+summary:
 
 - `awake`: the app was already up.
 - `woken`: it was asleep, the button got clicked, and the app finished starting.
